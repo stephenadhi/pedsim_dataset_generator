@@ -52,7 +52,7 @@ def generate_launch_description():
     
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
-        default_value=os.path.join(bringup_dir, 'maps', 'tb3_house_demo_crowd.yaml'),
+        default_value=os.path.join(bringup_dir, 'maps', 'small_airport.yaml'),
         description='Full path to map yaml file to load')
 
     declare_agent_1_params_file_cmd = DeclareLaunchArgument(
@@ -91,7 +91,14 @@ def generate_launch_description():
                                 'params_file': params_file,
                                 'autostart': autostart,   
                                 }.items()
-          ),       
+          ),
+          # IncludeLaunchDescription(
+          #       PythonLaunchDescriptionSource(os.path.join(bringup_dir,
+          #                                                   'launch',
+          #                                                   'house_demo_launch.py')),
+          #       launch_arguments={'namespace': robot['name'],
+          #                         }.items()
+          #   )
         ])
         nav_instances_cmds.append(group)
         # Nodes launching commands

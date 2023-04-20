@@ -30,7 +30,11 @@ def launch_setup(context, *args, **kwargs):
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
     map_yaml_file = LaunchConfiguration('map')
-    bringup_dir = get_package_share_directory('pedsim_simulator')
+
+    bringup_dir = get_package_share_directory('pedsim_dataset_generator')
+    maps_dir = get_package_share_directory('pedsim_simulator')
+    
+    default_map_file = os.path.join(maps_dir, 'maps', 'warehouse.yaml')
     
     lifecycle_bt_node = ['planner_server', 'controller_server']
     lifecycle_map_node = ['map_server']
@@ -44,9 +48,10 @@ def launch_setup(context, *args, **kwargs):
         'namespace',
         default_value='',
         description='Top-level namespace')
+
     declare_params_file_cmd = DeclareLaunchArgument(
       'params_file',
-      default_value=os.path.join(bringup_dir, 'params', 'nav2_param_agent_1.yaml'),
+      default_value=os.path.join(bringup_dir, 'params', 'nav2_param_agent_2.yaml'),
       description='Full path to the ROS2 parameters file to use for all launched nodes')
     
     declare_use_sim_time_cmd = DeclareLaunchArgument(
@@ -60,12 +65,13 @@ def launch_setup(context, *args, **kwargs):
     
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
-        default_value=os.path.join(bringup_dir, 'maps', 'tb3_house_demo_crowd.yaml'),
+        default_value=default_map_file,
         description='Full path to map yaml file to load')
 
     param_substitutions = {
         'use_sim_time': use_sim_time,
-        'autostart': autostart}
+        'autostart': autostart,
+        'yaml_filename': map_yaml_file}
 
     configured_params = RewrittenYaml(
             source_file=params_file,
@@ -95,7 +101,7 @@ def launch_setup(context, *args, **kwargs):
             executable='map_server',
             output='screen',
             emulate_tty=True,  # https://github.com/ros2/launch/issues/188
-            parameters=[{'yaml_filename': map_yaml_file}],
+            parameters=[configured_params],
             namespace=namespace,
             remappings=remappings)
 
@@ -121,14 +127,6 @@ def launch_setup(context, *args, **kwargs):
                           'node_names': lifecycle_bt_node}],
             namespace=namespace,
             remappings=remappings)
-
-    start_pedsim_cmd = IncludeLaunchDescription(
-              PythonLaunchDescriptionSource(os.path.join(bringup_dir,
-                                                          'launch',
-                                                          'house_demo_launch.py')),
-              launch_arguments={'namespace': namespace,
-                                }.items()
-          )
    
     return [
       declare_namespace_cmd,
@@ -141,24 +139,12 @@ def launch_setup(context, *args, **kwargs):
       start_planner_server_cmd,
       start_lifecycle_map_manager_cmd,
       start_lifecycle_bt_manager_cmd,
-      start_pedsim_cmd
     ]
 
 def generate_launch_description():
     opaque_function_cmd = OpaqueFunction(function=launch_setup)
 
     ld = LaunchDescription()
-    # ld.add_action(declare_namespace_cmd)
-    # ld.add_action(declare_use_sim_time_cmd)
-    # ld.add_action(declare_params_file_cmd)
-    # ld.add_action(declare_autostart_cmd)
-    # ld.add_action(declare_map_yaml_cmd)
-    
-    # ld.add_action(start_planner_server_cmd)
-    # ld.add_action(start_controller_server_cmd)
-    # ld.add_action(start_map_server_cmd)
-    # ld.add_action(start_lifecycle_map_manager_cmd)
-    # ld.add_action(start_lifecycle_bt_manager_cmd)
     ld.add_action(opaque_function_cmd)
 
     return ld
