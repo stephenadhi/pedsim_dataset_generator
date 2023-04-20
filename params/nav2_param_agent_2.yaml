@@ -1,41 +1,3 @@
-# bt_navigator:
-#   ros__parameters:
-#     use_sim_time: True
-#     global_frame: map
-#     robot_base_frame: agent_2
-#     transform_tolerance: 0.1
-#     goal_blackboard_id: goal
-#     goals_blackboard_id: goals
-#     path_blackboard_id: path
-#     # odom_topic: /odom
-#     bt_loop_duration: 10
-#     default_server_timeout: 20
-#     plugin_lib_names:
-#       - nav2_compute_path_to_pose_action_bt_node
-#       - nav2_follow_path_action_bt_node
-#       - nav2_back_up_action_bt_node
-#       - nav2_spin_action_bt_node
-#       - nav2_wait_action_bt_node
-#       - nav2_clear_costmap_service_bt_node
-#       - nav2_is_stuck_condition_bt_node
-#       - nav2_goal_reached_condition_bt_node
-#       - nav2_initial_pose_received_condition_bt_node
-#       - nav2_goal_updated_condition_bt_node
-#       - nav2_reinitialize_global_localization_service_bt_node
-#       - nav2_rate_controller_bt_node
-#       - nav2_distance_controller_bt_node
-#       - nav2_speed_controller_bt_node
-#       - nav2_recovery_node_bt_node
-#       - nav2_pipeline_sequence_bt_node
-#       - nav2_round_robin_node_bt_node
-#       - nav2_transform_available_condition_bt_node
-#       - nav2_time_expired_condition_bt_node
-#       - nav2_distance_traveled_condition_bt_node
-#       - nav2_single_trigger_bt_node
-#     error_code_names:
-#       - compute_path_error_code
-#       - follow_path_error_code
-
 planner_server:
   ros__parameters:
     expected_planner_frequency: 20.0
@@ -49,38 +11,17 @@ global_costmap:
       # Whether to send full costmap every update, rather than updates. (default: false)
       always_send_full_costmap: True
 
-      # Amount to pad footprint (m). (default: 0.01)
-      footprint_padding: 0.01
-
-      # Ordered set of footprint points passed in as a string, must be closed set. For example, the
-      # following defines a square base with side lengths of 0.2 meters footprint: “[ [0.1, 0.1],
-      # [0.1, -0.1], [-0.1, -0.1], [-0.1, 0.1] ]”. (default: [])
-      # Disabled due to circular robot. See `robot_radius` parameter
-      # footprint:
-
       # Reference frame. (default: map)
       global_frame: map
 
-      # Minimum cost of an occupancy grid map to be considered a lethal obstacle. (default: 100)
-      lethal_cost_threshold: 100
-
-      # Topic of map from map_server or SLAM. (default: map)
-      map_topic: map
-
-      # X origin of the costmap relative to width (m). (default: 0.0)
-      origin_x: -10.0
-
-      # Y origin of the costmap relative to height (m). (default: 0.0)
-      origin_y: -10.0
-
       # Frequency to publish costmap to topic. (default 1.0)
-      publish_frequency: 1.0
+      publish_frequency: 10.0
 
       # Height of costmap (m). (default: 5)
-      width: 20
+      width: 5
 
       # Width of costmap (m). (default: 5)
-      height: 20
+      height: 5
 
       # Resolution of 1 pixel of the costmap, in meters. (default: 0.1)
       resolution: 0.1
@@ -92,23 +33,10 @@ global_costmap:
       robot_radius: 0.2
 
       # Whether costmap should roll with robot base frame. (default: False)
-      rolling_window: False
-
-      # If false, treats unknown space as free space, else as unknown space. (default: False)
-      track_unknown_space: True
-
-      # TF transform tolerance. (default: 0.3)
-      transform_tolerance: 0.3
-
-      # If occupancy grid map should be interpreted as only 3 values (free, occupied, unknown) or
-      # with its stored values. (default: True)
-      trinary_costmap: True
-
-      # Cost of unknown space if tracking it. (default: 255)
-      unknown_cost_value: 255
+      rolling_window: True
 
       # Costmap update frequency. (default 5.0)
-      update_frequency: 1.0
+      update_frequency: 10.0
 
       # Whether when combining costmaps to use the maximum cost or override. (default: False)
       use_maximum: False
@@ -121,21 +49,8 @@ global_costmap:
         plugin: "nav2_costmap_2d::StaticLayer"
         # https://navigation.ros.org/configuration/packages/costmap-plugins/static.html
 
-        # Whether the static_layer plugin is enabled. (default: True)
-        enabled: True
-
-        # Subscribe to static map updates after receiving first. (default: False)
-        subscribe_to_updates: False
-
         # QoS settings for map topic. (default: True)
         map_subscribe_transient_local: True
-
-        # TF tolerance. (default: 0.0)
-        transform_tolerance: 0.0
-
-        # Map topic to subscribe to. If left empty the map topic will default to the global
-        # map_topic parameter in costmap_2d_ros. (default: "")
-        map_topic: ""
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
