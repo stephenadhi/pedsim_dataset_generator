@@ -33,26 +33,25 @@ public:
   PedsimDataRecorder();
 
 private:
+  bool is_subscribed_;
   int frame_time; // milliseconds
   int ego_agent_id; // Agent types 0, 1 -> ordinary agents 2 -> Robot 3 -> standing/elderly agents
-  void callback_1(const pedsim_msgs::msg::AgentStates &agents_msg,
-                const nav_msgs::msg::OccupancyGrid &local_costmap_msg);
   
-  void callback_2(const pedsim_msgs::msg::AgentStates &agents_msg,
-              const nav_msgs::msg::OccupancyGrid &global_costmap_msg);
+  std::shared_ptr<message_filters::Synchronizer<message_filters::sync_policies::ApproximateTime<std_msgs::msg::String, std_msgs::msg::String>>> subscriber_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-  std::shared_ptr<message_filters::Subscriber<pedsim_msgs::msg::AgentStates>> agents_sub_;
-  std::shared_ptr<message_filters::Subscriber<nav_msgs::msg::OccupancyGrid>> local_costmap_sub_;
-  //std::shared_ptr<message_filters::Subscriber<nav_msgs::msg::OccupancyGrid>> global_costmap_sub_;
-
-  std::shared_ptr<message_filters::TimeSynchronizer<pedsim_msgs::msg::AgentStates, nav_msgs::msg::OccupancyGrid>> sync_local_;
-  //std::shared_ptr<message_filters::TimeSynchronizer<pedsim_msgs::msg::AgentStates, nav_msgs::msg::OccupancyGrid>> sync_global_;
-
+  void common_callback(const pedsim_msgs::msg::AgentStates &agents_msg,
+                const nav_msgs::msg::OccupancyGrid &costmap_msg);
+  
   void write_data_to_txt_file(const pedsim_msgs::msg::AgentStates &agents_msg,
-                                    const nav_msgs::msg::OccupancyGrid &local_costmap_msg);
+                                    const nav_msgs::msg::OccupancyGrid &costmap_msg);
+  
   void record_bag(const std::vector<std::string> &topics);
+  
   bool check_agent_in_local_costmap(const pedsim_msgs::msg::AgentState &agent_msg,
-                                    const nav_msgs::msg::OccupancyGrid &local_costmap_msg);
+                                    const nav_msgs::msg::OccupancyGrid &costmap_msg);
+  
+  void stop_subscription();
 };
 
 #endif  // PEDSIM_DATA_RECORDER_HPP_
