@@ -1,41 +1,68 @@
 #include "pedsim_data_recorder.hpp"
 
 PedsimDataRecorder::PedsimDataRecorder()
-: Node("pedsim_data_recorder")
+: Node("pedsim_data_recorder"), subscriber_(nullptr), is_subscribed_(true)
 {
   // Set up subscribers
-  // TODO: implement subscribers
+  auto sub1 = std::make_shared<message_filters::Subscriber<pedsim_msgs::msg::AgentStates>>(this, "/pedsim_simulator/simulated_agents", 10);
+  auto sub2 = std::make_shared<message_filters::Subscriber<nav_msgs::msg::OccupancyGrid>>(this, "/local_costmap/costmap", 10);
+
+  // create an approximate time synchronizer to synchronize messages from the two topics
+  auto sync_policy = message_filters::sync_policies::ApproximateTime<pedsim_msgs::msg::AgentStates, nav_msgs::msg::OccupancyGrid>(10);
+
+  subscriber_ = std::make_shared<message_filters::Synchronizer<decltype(sync_policy)>>(sync_policy, *sub1, *sub2);
+  subscriber_->setSlop(0.05); // set the maximum time difference between messages to 0.05 seconds
+  subscriber_->registerCallback(std::bind(&PedsimDataRecorder::common_callback, this, std::placeholders::_1, std::placeholders::_2));
+
+  // create a timer to stop the subscription after 600 seconds
+  timer_ = create_wall_timer(std::chrono::seconds(600), std::bind(&PedsimDataRecorder::stop_subscription, this));
 
   std::ofstream data_file;
   data_file.open("dataset.txt");
-  record_bag({"/pedsim_simulator/simulated_agents", "local_costmap/costmap", "global_costmap/costmap"});
+  record_bag({"/pedsim_simulator/simulated_agents", "local_costmap/costmap"});
 }
 
-void PedsimDataRecorder::agents_callback(const pedsim_msgs::msg::AgentStates &agents_msg)
+void PedsimDataRecorder::common_callback(const pedsim_msgs::msg::AgentStates &agents_msg, 
+                                        const nav_msgs::msg::OccupancyGrid &costmap_msg)
 {
-  write_data_to_txt_file(agents_msg, local_costmap_msg);
+  if (is_subscribed_) {
+    write_data_to_txt_file(agents_msg, costmap_msg);
+  }
 }
 
 void PedsimDataRecorder::write_data_to_txt_file(const pedsim_msgs::msg::AgentStates &agents_msg,
-                                        const nav_msgs::msg::OccupancyGrid &local_costmap_msg)
+                                        const nav_msgs::msg::OccupancyGrid &costmap_msg)
 {
-  for (const auto &agent : agents_msg.agent_states) { 
-    bool occ_flag = check_agent_in_local_costmap(agent, local_costmap_msg);
+  rclcpp::Time det_time = agents_msg.header.stamp;
+  double frame_id = det_time.seconds();  
+  for (const auto &agent : agents_msg.agent_states) {
+    bool occ_flag = check_agent_in_local_costmap(agent, costmap_msg);
     std::vector<int8_t> costmap_data = {};
     if (agent.id == ego_agent_id) { 
-      costmap_data = local_costmap_msg.data;
-      continue; 
-      }
+      costmap_data = costmap_msg.data;
+      continue;
+    }
     int agent_id = agent.id;
-    int type = agent.type;
-    std::string social_state = agent.social_state;
     double pos_x = agent.pose.position.x;
     double pos_y = agent.pose.position.y;
     double lin_vel_x = agent.twist.linear.x;
     double lin_vel_y = agent.twist.linear.y;
     double ang_vel_z = agent.twist.angular.z;
-    
-
+    int agent_type = agent.type;
+    std::string social_state = agent.social_state;
+    // write the new data to the file
+    try {
+      data_file << frame_id << '\t' << agent_id << '\t' << pos_x << '\t' << pos_y << '\t'  << lin_vel_x 
+              << '\t' << lin_vel_y << '\t' << ang_vel_z << '\t' << agent_type << '\t'  << social_state << '\n';
+    } catch (std::ofstream::failure e) {
+      // if an exception occurs, close the file and rethrow the exception
+      data_file.close();
+      throw e;
+    }
+    // flush the buffer to ensure that the data is written to the file immediately
+    data_file.flush();
+    // sleep for a short time to avoid overloading the system
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
 
@@ -90,6 +117,14 @@ void PedsimDataRecorder::record_bag(const std::vector<std::string> &topics)
   // Stop recording after an hour
   rclcpp::sleep_for(std::chrono::hours(1));
   recorder->cancel();
+}
+
+void PedsimDataRecorder::stop_subscription() {
+  // stop the subscription and destroy the node
+  is_subscribed_ = false;
+  data_file.close();
+  subscriber_.reset();
+  rclcpp::shutdown();
 }
 
 int main(int argc, char * argv[])

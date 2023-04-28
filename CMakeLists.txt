@@ -27,7 +27,7 @@ set(dependencies
   "rosbag2_transport"
 )
 
-include_directories(include)
+# include_directories(include)
 
 # add_executable(pedsim_data_recorder src/pedsim_data_recorder.cpp)
 # ament_target_dependencies(pedsim_data_recorder ${dependencies})
