@@ -36,11 +36,10 @@ def launch_setup(context, *args, **kwargs):
     
     default_map_file = os.path.join(maps_dir, 'maps', 'warehouse.yaml')
     
-    lifecycle_bt_node = ['planner_server', 'controller_server']
+    lifecycle_bt_node = ['planner_server']
     lifecycle_map_node = ['map_server']
 
     remappings = [('/tf', 'tf'),
-                  # ('/tf', '/' + namespace.perform(context) + '/tf'),
                   ('/tf_static', 'tf_static')
                   ]
 
@@ -88,14 +87,6 @@ def launch_setup(context, *args, **kwargs):
       remappings=remappings,
       namespace=namespace)
 
-    start_controller_server_cmd = launch_ros.actions.Node(
-      package='nav2_controller',
-      executable='controller_server',
-      output='screen',
-      parameters=[configured_params],
-      remappings=remappings,
-      namespace=namespace)
-
     start_map_server_cmd = launch_ros.actions.Node(
             package='nav2_map_server',
             executable='map_server',
@@ -135,7 +126,6 @@ def launch_setup(context, *args, **kwargs):
       declare_autostart_cmd,
       declare_map_yaml_cmd,
       start_map_server_cmd,
-      start_controller_server_cmd,
       start_planner_server_cmd,
       start_lifecycle_map_manager_cmd,
       start_lifecycle_bt_manager_cmd,
