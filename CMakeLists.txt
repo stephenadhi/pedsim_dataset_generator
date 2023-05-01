@@ -27,26 +27,29 @@ set(dependencies
   "rosbag2_transport"
 )
 
-# include_directories(include)
+include_directories(include)
 
-# add_executable(pedsim_data_recorder src/pedsim_data_recorder.cpp)
-# ament_target_dependencies(pedsim_data_recorder ${dependencies})
+# Install agent pose publisher
+add_executable(agent_pose_publisher src/agent_pose_publisher.cpp)
+ament_target_dependencies(agent_pose_publisher ${dependencies})
+target_include_directories(agent_pose_publisher PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(agent_pose_publisher PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+install(TARGETS agent_pose_publisher agent_pose_publisher
+  DESTINATION lib/${PROJECT_NAME})
 
-# add_executable(agent_pose_publisher src/agent_pose_publisher.cpp)
-# ament_target_dependencies(agent_pose_publisher ${dependencies})
+# Install pedsim data recorder
+add_executable(pedsim_data_recorder src/pedsim_data_recorder.cpp)
+ament_target_dependencies(pedsim_data_recorder ${dependencies})
+target_include_directories(pedsim_data_recorder PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(pedsim_data_recorder PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+install(TARGETS pedsim_data_recorder pedsim_data_recorder
+DESTINATION lib/${PROJECT_NAME})
 
-# target_include_directories(agent_pose_publisher PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>)
-# target_compile_features(agent_pose_publisher PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-
-# install(TARGETS agent_pose_publisher agent_pose_publisher
-#   DESTINATION lib/${PROJECT_NAME})
-
-# install(TARGETS pedsim_data_recorder pedsim_data_recorder
-# DESTINATION lib/${PROJECT_NAME})
-
-  # Install launch files and directories.
+# Install launch files and directories.
 install(DIRECTORY
 src launch params ${PROJECT_NAME}
 DESTINATION share/${PROJECT_NAME}
